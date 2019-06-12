@@ -8,6 +8,8 @@ toc_footers:
   - <a href='https://github.com/lord/slate'>Documentation Powered by Slate</a>
 
 includes:
+  - shared_lib
+  - shared_lib_env_vars_loader
 
 search: true
 ---
