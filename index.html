@@ -222,6 +222,14 @@
           <li>
             <a href="#about" class="toc-h1 toc-link" data-title="About">About</a>
           </li>
+          <li>
+            <a href="#shared-library" class="toc-h1 toc-link" data-title="Shared Library">Shared Library</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#environment-variable-loader" class="toc-h2 toc-link" data-title="Environment Variable Loader">Environment Variable Loader</a>
+                  </li>
+              </ul>
+          </li>
       </ul>
         <ul class="toc-footer">
             <li><a href='https://github.com/lord/slate'>Documentation Powered by Slate</a></li>
@@ -238,6 +246,69 @@
 <p>This is also where I share about creating custom shared library methods — from implementation, testing and using them for your Jenkins pipeline.</p>
 
 <p>For questions, please email me at jvcudis@gmail.com.</p>
+<h1 id='shared-library'>Shared Library</h1>
+<p>Jenkins Shared Library allow users to share methods that can be used by other pipelines. When you have tasks that are repeated in multiple Jenkinsfile then abstracting those commont tasks using a shared library function can help you make it DRY (don&#39;t repeat yourself) thus resulting into a better Jenkinsfile.</p>
+
+<aside class="success">
+REFERENCE: <a href="https://jenkins.io/doc/book/pipeline/shared-libraries/">https://jenkins.io/doc/book/pipeline/shared-libraries/</a>
+</aside>
+<h2 id='environment-variable-loader'>Environment Variable Loader</h2>
+<blockquote>
+<p>This is an example of a <code>build.properties</code> file.</p>
+</blockquote>
+<pre class="highlight properties tab-properties"><code><span class="py">BUILD_ENV</span><span class="p">=</span><span class="s">TEST</span>
+<span class="py">VARIABLE2</span><span class="p">=</span><span class="s">true</span>
+</code></pre>
+<blockquote>
+<p>Implementation of <code>loadVarsFromFile.groovy</code></p>
+</blockquote>
+<pre class="highlight groovy tab-groovy"><code><span class="kt">def</span> <span class="nf">call</span><span class="o">(</span><span class="n">fileName</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">def</span> <span class="n">props</span> <span class="o">=</span> <span class="n">readProperties</span> <span class="nl">file:</span> <span class="n">fileName</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">prop</span> <span class="k">in</span> <span class="n">props</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">env</span><span class="o">[</span><span class="n">prop</span><span class="o">.</span><span class="na">key</span><span class="o">]</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="na">value</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+<blockquote>
+<p>Using the shared library method is as simple as invoking it within a script wrapper</p>
+</blockquote>
+<pre class="highlight groovy tab-groovy"><code><span class="n">pipeline</span> <span class="o">{</span>
+    <span class="n">agent</span> <span class="n">any</span>
+
+    <span class="nf">stages</span><span class="o">(</span><span class="s1">'Run Things'</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">stage</span><span class="o">(</span><span class="s1">'Load Files'</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">steps</span> <span class="o">{</span>
+                <span class="n">script</span> <span class="o">{</span> <span class="n">loadVarsFromFile</span><span class="o">(</span><span class="s1">'build.properties'</span><span class="o">)</span> <span class="o">}</span>
+                <span class="n">sh</span> <span class="s1">'printenv'</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+<p>For cases where you want to export the contents of file to the pipeline as environment variables, you can create a shared library function read the file and export the defined environment variables to the pipeline.</p>
+
+<p>What you need to do first is create a file containing the key-value pairs. I&#39;ve tried using both <code>.env</code> and <code>.properties</code> file but I&#39;m still not sure what are the valid file extensions allowed. In this example, we create a <code>build.properties</code> file. On our sample file, we have 2 sets of key-value pairs.</p>
+<h3 id='implementation'>Implementation</h3>
+<p>Create the shared library function next. We name our shared library method <code>loadVarsFromFile.groovy</code>. What we do is read the file by using the built-in <code>readProperties</code>
+utility step. Click <a href="https://jenkins.io/doc/pipeline/steps/pipeline-utility-steps/#readproperties-read-properties-from-files-in-the-workspace-or-text">here</a> for more pipeline utility steps. After that, we loop through the file contents and set each key-pair value as environment variable.</p>
+
+<p>If you noticed, we can use the pipeline utility steps (e.g. <code>readProperties</code>, <code>sh</code>, <code>echo</code>, etc) within our shared library method because when invoking the method within the pipeline, the context of the pipeline becomes available to the method.</p>
+<h3 id='testing'>Testing</h3>
+<p>You can also test this function by moving the function logic to a <code>class</code> that has to implement <code>Serializable</code> and then writing another  <code>class</code> that extends the <code>GroovyTestCase</code>. Below is a sample directory structure:</p>
+
+<p><code>
+jenkins-shared-library <br>
+-- src <br>
+&nbsp;&nbsp;&nbsp;-- com <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- journey <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- EnvironmentVariableLoader.groovy <br>
+-- test <br>
+&nbsp;&nbsp;&nbsp;-- com <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- journey <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- EnvironmentVariableLoaderTest.groovy <br>
+</code></p>
+
+<p>Full implementation here for <a href="https://github.com/jvcudis/jenkins-journey-shared-library/blob/master/src/com/journey/EnvironmentVariableLoader.groovy" target="_blank">EnvironmentVariableLoader.groovy</a> and <a href="https://github.com/jvcudis/jenkins-journey-shared-library/blob/master/test/com/journey/EnvironmentVariableLoaderTest.groovy" target="_blank">EnvironmentVariableLoaderTest.groovy</a>.</p>
 
       </div>
       <div class="dark-box">

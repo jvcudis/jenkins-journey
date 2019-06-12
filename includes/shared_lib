@@ -1,0 +1,6 @@
+<h1 id='shared-library'>Shared Library</h1>
+<p>Jenkins Shared Library allow users to share methods that can be used by other pipelines. When you have tasks that are repeated in multiple Jenkinsfile then abstracting those commont tasks using a shared library function can help you make it DRY (don&#39;t repeat yourself) thus resulting into a better Jenkinsfile.</p>
+
+<aside class="success">
+REFERENCE: <a href="https://jenkins.io/doc/book/pipeline/shared-libraries/">https://jenkins.io/doc/book/pipeline/shared-libraries/</a>
+</aside>
