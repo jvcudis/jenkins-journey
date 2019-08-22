@@ -45,7 +45,7 @@ utility step. Click <a href="https://jenkins.io/doc/pipeline/steps/pipeline-util
 
 If you noticed, we can use the pipeline utility steps (e.g. `readProperties`, `sh`, `echo`, etc) within our shared library method because when invoking the method within the pipeline, the context of the pipeline becomes available to the method.
 
-### Testing Testing
+### Testing
 
 You can also test this function by moving the function logic to a `class` that has to implement `Serializable` and then writing another  `class` that extends the `GroovyTestCase`. Below is a sample directory structure:
 
